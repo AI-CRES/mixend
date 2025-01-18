@@ -27,5 +27,6 @@ authlib
 matplotlib
 plotly
 PyJWT
+pillow
 
 
