@@ -4135,9 +4135,9 @@ def ajouter_informations_personnel():
                     # Vérification de la taille du fichier
                     if cv_data is not None and cv_data.size > 3 * 1024 * 1024:  # 3 MB
                         st.error("La taille du fichier dépasse 3 MB. Veuillez télécharger un fichier plus petit.")
-                        membre["cv"] = cv_data  # Réinitialiser si la taille est dépassée
+                        membre["cv"] = None     # Réinitialiser si la taille est dépassée
                     else:
-                        membre["cv"] = None  # Enregistrer le fichier s'il est valide
+                        membre["cv"] = cv_data  # Enregistrer le fichier s'il est valide
 
                         # Générer et enregistrer automatiquement le résumé
                         if membre["cv"] and not membre.get("resume_cv"):
