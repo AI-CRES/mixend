@@ -156,6 +156,7 @@ openai.api_key = api_key
 
    
     
+    
 def load_credentials_from_mongo():
     """
     Récupère les utilisateurs depuis MongoDB et les formate pour streamlit-authenticator.
@@ -271,9 +272,11 @@ def collect_persona_pme(index_produit):
             st.write("")
             submit_button = st.form_submit_button("✅ Valider")
 
+
         if submit_button:
             st.session_state["produits_data"][index_produit]["nom_produit"] = nom_produit
             st.success(f"Nom du produit mis à jour : {nom_produit}")
+            st.rerun()
             # Optionnel : Maintenir la sélection actuelle
             # st.session_state["selected_idx_produit"] = index_produit
 
@@ -1523,16 +1526,6 @@ def collect_concurrence_pme_multi():
     return st.session_state.competitors
 
 
-def serialize_membres(membres):
-    serializable_membres = []
-    for membre in membres:
-        membre_copy = {k: v for k, v in membre.items() if k != 'cv'}
-        serializable_membres.append(membre_copy)
-    return serializable_membres
-
-
-
-
 def collect_concurrence_pme(index_produit):
     """
     Collecte et/ou met à jour la Concurrence pour le produit index_produit.
@@ -2256,7 +2249,7 @@ def obtenir_business_model(nom_entreprise, type_entreprise, montant_projet ,prev
     
     # Récupérer le metaprompt basé sur le type d'entreprise
     metaprompt = get_metaprompt(type_entreprise)
-    print(rubriques)
+
     
     if generation == 1:
         # Première génération avec les nouvelles rubriques
@@ -2353,7 +2346,7 @@ def obtenir_business_model(nom_entreprise, type_entreprise, montant_projet ,prev
                 st.error(f"Erreur")
             return html_genere
         except Exception as e:
-            st.error(f"Erreur lors de la génération du contenu ")
+            st.error(f"Erreur lors de la génération du contenu  {e}")
             return ""
 
 
@@ -2908,8 +2901,7 @@ def chain_of_thougtht(type_chain_of_thougtht, montant_projet, nom_entreprise, pr
 
     # Récupérer le metaprompt basé sur le type d'entreprise
     metaprompt = get_metaprompt_chain_of_thougtht(type_chain_of_thougtht)
-    print(rubriques)
-    print( metaprompt )
+
    
     if generation == 1:
         # Première génération avec les nouvelles rubriques
@@ -4080,6 +4072,12 @@ def afficher_informations_cv_document(cv_data, query="Pouvez-vous résumer ce CV
     except Exception as e:
         raise ValueError(f"Erreur lors du traitement du CV : {str(e)}")
 
+def serialize_membres(membres):
+    serializable_membres = []
+    for membre in membres:
+        membre_copy = {k: v for k, v in membre.items() if k != 'cv'}
+        serializable_membres.append(membre_copy)
+    return serializable_membres
 
 def ajouter_informations_personnel():
     """
@@ -4139,7 +4137,7 @@ def ajouter_informations_personnel():
                         st.error("La taille du fichier dépasse 3 MB. Veuillez télécharger un fichier plus petit.")
                         membre["cv"] = None  # Réinitialiser si la taille est dépassée
                     else:
-                        membre["cv"] = cv_data  # Enregistrer le fichier s'il est valide
+                        membre["cv"] = None  # Enregistrer le fichier s'il est valide
 
                         # Générer et enregistrer automatiquement le résumé
                         if membre["cv"] and not membre.get("resume_cv"):
@@ -4179,6 +4177,9 @@ def ajouter_informations_personnel():
                     st.write("- **CV :** Non valide ou non téléchargé")
             else:
                 st.write(f"- **Informations :** {membre.get('informations', 'Non fourni')}")
+    #st.write(st.session_state["membres"])
+    serializable_membres = serialize_membres(st.session_state["membres"])
+    st.write(serializable_membres )
 
 
 
@@ -4370,7 +4371,7 @@ def page_collecte_donnees():
                                                          previousbp='', 
                                                          generation=1)
                         st.markdown(html_content)
-                        print(html_content)
+
                             
                 else:
                     st.info("Aucun produit ajouté pour le moment.")
@@ -9109,7 +9110,7 @@ def telecharger_document_complet():
     export_data_plan_financement = st.session_state.get('export_data_plan_financement_trois_ans', {})
     export_data_budget_tresorerie_part1 = st.session_state.get('export_data_budget_previsionnel_tresorerie_part1', {})
     export_data_budget_tresorerie_part2 = st.session_state.get('export_data_budget_previsionnel_tresorerie_part2', {})
-    print(export_data_plan_financement)
+
     st.write(export_data_plan_financement)
     # Vérifiez que toutes les données nécessaires sont présentes
     if not all([
@@ -10105,7 +10106,10 @@ def format_table_data(data, title):
     return text + "\n"
 
 def page_generation_business_plan():
+    # Création des colonnes pour le titre et le bouton
     st.title("Générateur de Business Plan")
+
+            
     #st.write(st.session_state["produits_data"])
 
     uploaded_file = st.file_uploader("Téléchargez votre fichier PDF", type="pdf")
@@ -10843,8 +10847,8 @@ def page_generation_business_plan():
 
             # Télécharger les fichiers générés
             st.success("Le PDF et le document Word ont été générés avec succès.")
-            with open(pdf_file_path, "rb") as f:
-                st.download_button("Téléchargez le PDF", f, file_name="business_plan.pdf", mime="application/pdf")
+            #with open(pdf_file_path, "rb") as f:
+                #st.download_button("Téléchargez le PDF", f, file_name="business_plan.pdf", mime="application/pdf")
 
             st.download_button("Téléchargez le document Word", word_buffer, file_name="business_plan.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
 
@@ -10974,6 +10978,47 @@ except ValueError:
 # Insérer les nouveaux onglets avant "Génération du Business Plan"
 tab_names =business_model_tab_names + tab_names
 sections = business_model_sections + sections
+
+
+# Fonction de rafraîchissement du Business Plan
+def refresh_business_plan():
+    """
+    Réinitialise toutes les variables de session liées au Business Plan.
+    """
+    keys_to_reset = [
+        'business_plan_markdown_content1',
+        'business_plan_markdown_content2',
+        'business_plan_precedent',
+        'markdown_content1',
+        'markdown_content2',
+        'business_models',
+        'personas',
+        'problem_trees',
+        'analyse_marches',
+        'facteurs_limitants',
+        'concurrences',
+        'type_entreprise',
+        'montant_projet',
+        'nom_entreprise',
+        'nb_products',
+        'produits_data',
+        'selected_idx_produit',
+        'previous_selected_idx_produit',
+        'rubriques_initiales',
+        'business_model_precedent',
+        'data',
+        'tables'
+    ]
+    
+    for key in keys_to_reset:
+        if key in st.session_state:
+            del st.session_state[key]
+    
+    # Réinitialiser 'data' et 'tables' à des valeurs par défaut
+    st.session_state['data'] = {}
+    st.session_state['tables'] = {}
+    
+    st.success("Le Business Plan a été réinitialisé avec succès.")
 
 
 
@@ -11879,8 +11924,15 @@ def page_otp_verification():
         st.error("Votre code OTP a expiré. Veuillez redémarrer le processus.")
         del st.session_state['otp']
         del st.session_state['otp_expiration']
-        st.session_state['page'] = 'Connexion'
-        st.rerun()
+        # Proposer un bouton pour renvoyer l'OTP
+        st.write("Veuillez renvoyer un nouvel OTP pour continuer.")
+        if st.button("Renvoyer l'OTP"):
+            # Appeler la fonction pour générer et envoyer un nouvel OTP
+            st.session_state['page'] = 'Connexion'
+            st.rerun()
+        return  # Arrêter l'exécution de la fonction après avoir proposé le renvoi
+
+
 
     st.write("Veuillez entrer le code OTP à 6 chiffres reçu par email.")
 
@@ -11966,8 +12018,8 @@ def page_inscription():
             st.error("Les mots de passe ne correspondent pas.")
         else:
             # FORCER le rôle = "user"
-            success, message = ajouter_utilisateur(email, nom, mot_de_passe, role="admin")
-            #success, message = ajouter_utilisateur(email, nom, mot_de_passe, role="user")
+            #success, message = ajouter_utilisateur(email, nom, mot_de_passe, role="admin")
+            success, message = ajouter_utilisateur(email, nom, mot_de_passe, role="user")
 
             if success:
                 st.success(message)
@@ -12150,7 +12202,15 @@ def page_accueilles():
     
     
 def page_accueil() :
-    st.title('Business Plan')
+    col1, col2 = st.columns([4, 1])  # Ajustez les ratios selon vos besoins
+    with col1:
+        st.title("Business Plan")  # Titre dans la première colonne
+
+    with col2:
+        if st.button("🔄 Actualiser"):
+            st.rerun()
+            
+    #st.title('Business Plan')
     utilisateur = get_current_user()
     st.session_state['user_info'] = utilisateur
     
