@@ -4135,7 +4135,7 @@ def ajouter_informations_personnel():
                     # Vérification de la taille du fichier
                     if cv_data is not None and cv_data.size > 3 * 1024 * 1024:  # 3 MB
                         st.error("La taille du fichier dépasse 3 MB. Veuillez télécharger un fichier plus petit.")
-                        membre["cv"] = None  # Réinitialiser si la taille est dépassée
+                        membre["cv"] = cv_data  # Réinitialiser si la taille est dépassée
                     else:
                         membre["cv"] = None  # Enregistrer le fichier s'il est valide
 
@@ -4177,9 +4177,7 @@ def ajouter_informations_personnel():
                     st.write("- **CV :** Non valide ou non téléchargé")
             else:
                 st.write(f"- **Informations :** {membre.get('informations', 'Non fourni')}")
-    #st.write(st.session_state["membres"])
-    serializable_membres = serialize_membres(st.session_state["membres"])
-    st.write(serializable_membres )
+
 
 
 
