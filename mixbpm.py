@@ -1523,6 +1523,16 @@ def collect_concurrence_pme_multi():
     return st.session_state.competitors
 
 
+def serialize_membres(membres):
+    serializable_membres = []
+    for membre in membres:
+        membre_copy = {k: v for k, v in membre.items() if k != 'cv'}
+        serializable_membres.append(membre_copy)
+    return serializable_membres
+
+
+
+
 def collect_concurrence_pme(index_produit):
     """
     Collecte et/ou met à jour la Concurrence pour le produit index_produit.
@@ -10457,7 +10467,7 @@ def page_generation_business_plan():
                     system_message = system_messages[section_name]
                     query = queries[section_name]
                             
-                    full_contents = combined_content + " " + query+ "" + system_message+ json.dumps(final_text)+ full_text+ ""+ json.dumps(st.session_state["produits_data"])+json.dumps(st.session_state["membres"])
+                    full_contents = combined_content + " " + query+ "" + system_message+ json.dumps(final_text)+ full_text+ ""+ json.dumps(st.session_state["produits_data"])+json.dumps(serialize_membres(st.session_state["membres"]))
                     tokens_in_input = count_tokens(full_contents , MODEL) 
                     tokens_needed = tokens_in_input + MAX_TOKENS_PER_REQUEST
                     
@@ -10473,7 +10483,7 @@ def page_generation_business_plan():
 
                         
                         else:
-                            results_first_part[section_name] = generate_section(system_message, query, documents, combined_content+"Voici la liste de membre de l'entreprise:"+json.dumps(st.session_state["membres"]), final_text, rubriques="", business_model=st.session_state.business_model_precedent, bm_precedent="",nom_entreprise=st.session_state.nom_entreprise,precedent_chain_of="" ,generation=1)
+                            results_first_part[section_name] = generate_section(system_message, query, documents, combined_content+"Voici la liste de membre de l'entreprise:"+json.dumps(serialize_membres(st.session_state["membres"])), final_text, rubriques="", business_model=st.session_state.business_model_precedent, bm_precedent="",nom_entreprise=st.session_state.nom_entreprise,precedent_chain_of="" ,generation=1)
 
                     
                     except ValueError as e:
@@ -10492,7 +10502,7 @@ def page_generation_business_plan():
                 with st.spinner(f"Génération de {section_name}..."):
                     system_message = system_messages[section_name]
                     query = queries[section_name]
-                    full_contents = combined_content + " " + query+ "" + system_message+ json.dumps(final_text)+ full_text+ json.dumps(st.session_state["produits_data"])+json.dumps(st.session_state["membres"])
+                    full_contents = combined_content + " " + query+ "" + system_message+ json.dumps(final_text)+ full_text+ json.dumps(st.session_state["produits_data"])+json.dumps(serialize_membres(st.session_state["membres"]))
                     tokens_in_input = count_tokens(full_contents , MODEL) 
                     tokens_needed = tokens_in_input + MAX_TOKENS_PER_REQUEST
                     
@@ -10502,7 +10512,7 @@ def page_generation_business_plan():
                         return
                     
                     try:
-                        results_second_part[section_name] = generate_section(system_message, query, documents, combined_content+"Voici la liste de membre de l'entreprise:"+json.dumps(st.session_state["membres"]), final_text, rubriques="", business_model=st.session_state.business_model_precedent,bm_precedent="",nom_entreprise=st.session_state.nom_entreprise,precedent_chain_of="", generation=1)
+                        results_second_part[section_name] = generate_section(system_message, query, documents, combined_content+"Voici la liste de membre de l'entreprise:"+json.dumps(serialize_membres(st.session_state["membres"])), final_text, rubriques="", business_model=st.session_state.business_model_precedent,bm_precedent="",nom_entreprise=st.session_state.nom_entreprise,precedent_chain_of="", generation=1)
                     except ValueError as e:
                         results_second_part[section_name] = f"Erreur: {str(e)}"
                     
@@ -10524,7 +10534,7 @@ def page_generation_business_plan():
                         with st.spinner(f"Génération de {section_name}..."):
                             system_message = system_messages[section_name]
                             query = queries[section_name]
-                            full_contents = combined_content + " " + query+ "" + system_message+ json.dumps(final_text)+ full_text + json.dumps(st.session_state["produits_data"])+json.dumps(st.session_state["membres"])+html_content
+                            full_contents = combined_content + " " + query+ "" + system_message+ json.dumps(final_text)+ full_text + json.dumps(st.session_state["produits_data"])+json.dumps(serialize_membres(st.session_state["membres"]))+html_content
                             tokens_in_input = count_tokens(full_contents , MODEL) 
                             tokens_needed = tokens_in_input + MAX_TOKENS_PER_REQUEST
                             
@@ -10536,9 +10546,9 @@ def page_generation_business_plan():
                             try:
                                 # Vérifier si la section est "Couverture" ou "Sommaire"
                                 if section_name in ["Couverture", "Sommaire"]:
-                                    results_first_part[section_name] = generate_section(system_message, query, documents, combined_content+"Voici la liste de membre de l'entreprise:"+json.dumps(st.session_state["membres"]), "", rubriques="", business_model="",bm_precedent="",nom_entreprise=st.session_state.nom_entreprise,precedent_chain_of=html_content, generation=2)
+                                    results_first_part[section_name] = generate_section(system_message, query, documents, combined_content+"Voici la liste de membre de l'entreprise:"+json.dumps(serialize_membres(st.session_state["membres"])), "", rubriques="", business_model="",bm_precedent="",nom_entreprise=st.session_state.nom_entreprise,precedent_chain_of=html_content, generation=2)
                                 else:
-                                    results_first_part[section_name] = generate_section(system_message, query, documents, combined_content+"Voici la liste de membre de l'entreprise:"+json.dumps(st.session_state["membres"]), final_text, rubriques=st.session_state["produits_data"], business_model=st.session_state.business_model_precedent,bm_precedent=st.session_state.business_plan_precedent, nom_entreprise=st.session_state.nom_entreprise,precedent_chain_of=html_content, generation=2)
+                                    results_first_part[section_name] = generate_section(system_message, query, documents, combined_content+"Voici la liste de membre de l'entreprise:"+json.dumps(serialize_membres(st.session_state["membres"])), final_text, rubriques=st.session_state["produits_data"], business_model=st.session_state.business_model_precedent,bm_precedent=st.session_state.business_plan_precedent, nom_entreprise=st.session_state.nom_entreprise,precedent_chain_of=html_content, generation=2)
                             except ValueError as e:
                                 results_first_part[section_name] = f"Erreur: {str(e)}"
                             
@@ -10554,7 +10564,7 @@ def page_generation_business_plan():
                         with st.spinner(f"Génération de {section_name}..."):
                             system_message = system_messages[section_name]
                             query = queries[section_name]
-                            full_contents = combined_content + " " + query+ "" + system_message+ json.dumps(final_text)+ full_text+json.dumps(st.session_state["produits_data"])+json.dumps(st.session_state["membres"])
+                            full_contents = combined_content + " " + query+ "" + system_message+ json.dumps(final_text)+ full_text+json.dumps(st.session_state["produits_data"])+json.dumps(serialize_membres(st.session_state["membres"]))
                             tokens_in_input = count_tokens(full_contents  , MODEL) 
                             tokens_needed = tokens_in_input + MAX_TOKENS_PER_REQUEST
                             
@@ -10564,7 +10574,7 @@ def page_generation_business_plan():
                                 return
                             
                             try:
-                                results_second_part[section_name] = generate_section(system_message, query, documents, combined_content+"Voici la liste de membre de l'entreprise:" +json.dumps(st.session_state["membres"]), final_text, rubriques=st.session_state["produits_data"], business_model=st.session_state.business_model_precedent,bm_precedent=st.session_state.business_plan_precedent, nom_entreprise=st.session_state.nom_entreprise,precedent_chain_of=html_content,generation=2)
+                                results_second_part[section_name] = generate_section(system_message, query, documents, combined_content+"Voici la liste de membre de l'entreprise:" +json.dumps(serialize_membres(st.session_state["membres"])), final_text, rubriques=st.session_state["produits_data"], business_model=st.session_state.business_model_precedent,bm_precedent=st.session_state.business_plan_precedent, nom_entreprise=st.session_state.nom_entreprise,precedent_chain_of=html_content,generation=2)
                             except ValueError as e:
                                 results_second_part[section_name] = f"Erreur: {str(e)}"
                             
