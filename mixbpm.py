@@ -4390,8 +4390,20 @@ def page_collecte_donnees():
                             ameliorations="",
                             generation=1
                         )
-                        st.write(contenu_bmc_initial)
+                        #st.write(contenu_bmc_initial)
                         #st.write(st.session_state["produits_data"][selected_idx])
+                        st.subheader("Contenu Initial Généré Ishai")
+                        encoded_html = base64.b64encode(contenu_bmc_initial.encode('utf-8')).decode('utf-8')
+
+                        # Créer l'URL de données
+                        data_url = f"data:text/html;base64,{encoded_html}"
+
+                        st.markdown(
+                            f"""
+                            <iframe src="{data_url}" width="100%" height="1500" frameborder="0" scrolling="yes"></iframe>
+                            """,
+                            unsafe_allow_html=True
+                        )
                         
                         if not contenu_bmc_initial:
                             st.error("Erreur lors de la génération du contenu initial. Veuillez réessayer ou selectionner d'abord un produit.")
@@ -4429,8 +4441,8 @@ def page_collecte_donnees():
                             st.session_state.business_model_precedent = contenu_bmc_initial
                             
                             # Optionnel : Afficher le contenu généré pour vérification
-                            st.subheader("Contenu Initial Généré Ishai")
-                            st.markdown(contenu_bmc_initial, unsafe_allow_html=True)
+                            
+                            #st.markdown(contenu_bmc_initial, unsafe_allow_html=True)
 
                             
                 else:
@@ -12490,7 +12502,6 @@ def trim_message_history(messages, user_input, model="gpt-4", context_limit=CONT
     # Ajouter le user_input à la fin de l'historique trimé
     #trimmed_messages.append({"role": "user", "content": user_input})
     total_tokens += user_input_tokens
-    st.write(total_tokens)
     return trimmed_messages
 
 
