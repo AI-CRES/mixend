@@ -12455,7 +12455,45 @@ def page_chatssss():
                     
 import time                  
 # Fonction principale de l'application de chat
-# Fonction principale de l'application de chat
+# Définir la limite de contexte
+CONTEXT_LIMIT = 4100  # Ajustez selon votre modèle
+CONTEXT_LIMIT_INPUT = 3590  # Ajustez selon votre modèle
+
+
+def trim_message_history(messages, user_input, model="gpt-4", context_limit=CONTEXT_LIMIT):
+    """
+    Garde les messages les plus récents jusqu'à ce que la somme des tokens soit inférieure à la limite de contexte.
+    Inclut toujours le user_input et préserve le message système.
+    """
+    total_tokens = 0
+    trimmed_messages = []
+    
+    # Inclure le message système en premier
+    system_messages = [msg for msg in messages if msg['role'] == 'system']
+    if system_messages:
+        trimmed_messages.extend(system_messages)
+        total_tokens += count_tokens(system_messages[0]['content'], model)
+    
+    # Calculer les tokens de user_input
+    user_input_tokens = count_tokens(user_input, model)
+    
+    # Parcourir les messages en ordre inverse (du plus récent au plus ancien)
+    for msg in reversed(messages):
+        if msg['role'] == 'system':
+            continue  # Déjà inclus
+        msg_tokens = count_tokens(msg['content'], model)
+        if total_tokens + msg_tokens + user_input_tokens > context_limit + 200:
+            break
+        trimmed_messages.insert(1, msg)  # Insérer après le message système
+        total_tokens += msg_tokens
+    
+    # Ajouter le user_input à la fin de l'historique trimé
+    #trimmed_messages.append({"role": "user", "content": user_input})
+    total_tokens += user_input_tokens
+    st.write(total_tokens)
+    return trimmed_messages
+
+
 def page_chat():
     st.title("💬 Interface de Chat")
 
@@ -12463,7 +12501,7 @@ def page_chat():
     if not utilisateur:
         st.warning("Vous n'êtes pas connecté.")
         return
-   
+    
     MODEL = "gpt-4"
     MAX_TOKENS_PER_REQUEST = 150
     
@@ -12477,7 +12515,7 @@ def page_chat():
     # Initialiser l'historique des messages dans la session
     if 'messages' not in st.session_state:
         st.session_state['messages'] = [
-            {"role": "system", "content": "Tu es un assistant expert en génération de business et business plan."}
+            {"role": "system", "content": "Tu es un assistant expert en génération de business model et business plan. aussi un expert en business"}
         ]
     
     # Initialiser le drapeau de réponse en cours
@@ -12496,17 +12534,21 @@ def page_chat():
     if st.session_state['response_pending']:
         assistant_placeholder = st.empty()
         assistant_placeholder.markdown("**Assistant:** En cours de génération...")
-
+    
     # Entrée utilisateur via le composant de chat
     user_input = st.chat_input("Entrez votre question")
 
     if user_input:
         # Ajouter le message de l'utilisateur à l'historique
+        if count_tokens(user_input, MODEL) > CONTEXT_LIMIT_INPUT :
+            st.error("❌ Votre message est trop long et dépasse la limite de contexte autorisée. Veuillez réduire la longueur de votre message et réessayer.")
+            return
+
         st.session_state['messages'].append({"role": "user", "content": user_input})
         st.chat_message("user").write(user_input)
         
         # Calculer les tokens nécessaires (entrée + réponse prévue)
-        tokens_in_input = count_tokens(user_input, MODEL)
+        tokens_in_input = count_tokens(user_input+ json.dumps(st.session_state['messages']), MODEL)
         tokens_needed = tokens_in_input + MAX_TOKENS_PER_REQUEST
         st.write(f"**Tokens nécessaires :** {tokens_needed}")
         
@@ -12520,6 +12562,12 @@ def page_chat():
                 st.warning("Une réponse est déjà en cours de génération. Veuillez patienter.")
                 return
             else:
+                # Trimmer l'historique des messages pour respecter la limite de contexte
+                trimmed_messages = trim_message_history(st.session_state['messages'],user_input, MODEL, CONTEXT_LIMIT)
+                
+                # Mettre à jour l'historique des messages avec les messages trimés
+                st.session_state['messages'] = trimmed_messages
+                
                 st.session_state['response_pending'] = True  # Marquer comme réponse en cours
 
                 try:
@@ -12533,8 +12581,8 @@ def page_chat():
                     # Appel à l'API OpenAI ChatCompletion avec streaming
                     response = openai.ChatCompletion.create(
                         model=MODEL,
-                        messages=st.session_state['messages'],
-                        max_tokens=1500,
+                        messages=st.session_state['messages'], 
+                        max_tokens=4000,
                         temperature=0.7,
                         stream=True  # Activer le streaming
                     )
@@ -12554,7 +12602,7 @@ def page_chat():
                     st.session_state['messages'].append({"role": "assistant", "content": assistant_reply})
                     
                     # Calculer les tokens utilisés
-                    tokens_utilises = tokens_needed  # Simplification si 'usage' n'est pas disponible
+                    tokens_utilises = tokens_needed+count_tokens(assistant_reply, MODEL)  # Simplification si 'usage' n'est pas disponible
                     if 'usage' in response:
                         tokens_utilises = response['usage']['total_tokens']
                     
@@ -12575,7 +12623,7 @@ def page_chat():
                     st.error(f"Erreur inattendue: {e}")
                 
                 finally:
-                    st.session_state['response_pending'] = False  # Réinitialiser le drapeau
+                    st.session_state['response_pending'] = False
 
 
 
